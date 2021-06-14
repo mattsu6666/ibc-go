@@ -13,11 +13,13 @@ var (
 	// DefaultAllowedClients are "06-solomachine" and "07-tendermint"
 	DefaultAllowedClients = []string{exported.Solomachine, exported.Tendermint}
 
-	DefaultWASMClientEnabled = false
+	// DefaultWasmClientsEnabled is false
+	DefaultWasmClientsEnabled = false
 
 	// KeyAllowedClients is store's key for AllowedClients Params
 	KeyAllowedClients = []byte("AllowedClients")
 
+	// KeyWasmClientsEnabled indicates whether Wasm light clients are allowed
 	KeyWasmClientsEnabled = []byte("WasmClientsEnabled")
 )
 
@@ -36,7 +38,7 @@ func NewParams(wasmClientEnabled bool, allowedClients ...string) Params {
 
 // DefaultParams is the default parameter configuration for the ibc-client module
 func DefaultParams() Params {
-	return NewParams(DefaultWASMClientEnabled, DefaultAllowedClients...)
+	return NewParams(DefaultWasmClientsEnabled, DefaultAllowedClients...)
 }
 
 // Validate all ibc-client module parameters
@@ -59,6 +61,10 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // IsAllowedClient checks if the given client type is registered on the allowlist.
 func (p Params) IsAllowedClient(clientType string) bool {
+	if p.WasmClientsEnabled && isWasmClient(clientType) {
+		return true
+	}
+
 	for _, allowedClient := range p.AllowedClients {
 		if allowedClient == clientType {
 			return true
@@ -89,4 +95,8 @@ func validateClients(i interface{}) error {
 	}
 
 	return nil
+}
+
+func isWasmClient(clientType string) bool {
+	return strings.HasPrefix(clientType, exported.WasmClientPrefix)
 }
