@@ -27,7 +27,6 @@ func GetTxCmd() *cobra.Command {
 		ibcclient.GetTxCmd(),
 		channel.GetTxCmd(),
 		wasmmanager.GetTxCmd(),
-		wasm.GetTxCmd(),
 	)
 
 	return ibcTxCmd
