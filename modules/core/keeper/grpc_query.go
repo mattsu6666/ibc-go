@@ -134,12 +134,7 @@ func (q Keeper) NextSequenceReceive(c context.Context, req *channeltypes.QueryNe
 	return q.ChannelKeeper.NextSequenceReceive(c, req)
 }
 
-// LatestWASMCode implements the IBC QueryServer interface
-func (q Keeper) LatestWASMCode(c context.Context, req *wasmtypes.LatestWASMCodeQuery) (*wasmtypes.LatestWASMCodeResponse, error) {
-	return q.WasmKeeper.LatestWASMCode(c, req)
-}
-
-// LatestWASMCodeEntry implements the IBC QueryServer interface
-func (q Keeper) LatestWASMCodeEntry(c context.Context, req *wasmtypes.LatestWASMCodeEntryQuery) (*wasmtypes.LatestWASMCodeEntryResponse, error) {
-	return q.WasmKeeper.LatestWASMCodeEntry(c, req)
+// WasmCode implements the IBC QueryServer interface
+func (q Keeper) WasmCode(c context.Context, req *wasmtypes.WasmCodeQuery) (*wasmtypes.WasmCodeResponse, error) {
+	return q.WasmKeeper.WasmCode(c, req)
 }
