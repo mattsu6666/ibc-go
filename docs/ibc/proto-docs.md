@@ -222,8 +222,8 @@
     - [Query](#ibc.core.wasm.v1.Query)
   
 - [ibc/core/wasm/v1/tx.proto](#ibc/core/wasm/v1/tx.proto)
-    - [MsgPushNewWASMCode](#ibc.core.wasm.v1.MsgPushNewWASMCode)
-    - [MsgPushNewWASMCodeResponse](#ibc.core.wasm.v1.MsgPushNewWASMCodeResponse)
+    - [MsgPushNewWasmCode](#ibc.core.wasm.v1.MsgPushNewWasmCode)
+    - [MsgPushNewWasmCodeResponse](#ibc.core.wasm.v1.MsgPushNewWasmCodeResponse)
   
     - [Msg](#ibc.core.wasm.v1.Msg)
   
@@ -3294,9 +3294,9 @@ Query service for wasm module
 
 
 
-<a name="ibc.core.wasm.v1.MsgPushNewWASMCode"></a>
+<a name="ibc.core.wasm.v1.MsgPushNewWasmCode"></a>
 
-### MsgPushNewWASMCode
+### MsgPushNewWasmCode
 Message type to push new wasm code
 
 
@@ -3310,9 +3310,9 @@ Message type to push new wasm code
 
 
 
-<a name="ibc.core.wasm.v1.MsgPushNewWASMCodeResponse"></a>
+<a name="ibc.core.wasm.v1.MsgPushNewWasmCodeResponse"></a>
 
-### MsgPushNewWASMCodeResponse
+### MsgPushNewWasmCodeResponse
 Response in case of successful handling
 
 
@@ -3338,7 +3338,7 @@ Msg defines the ibc/wasm Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `PushNewWASMCode` | [MsgPushNewWASMCode](#ibc.core.wasm.v1.MsgPushNewWASMCode) | [MsgPushNewWASMCodeResponse](#ibc.core.wasm.v1.MsgPushNewWASMCodeResponse) | PushNewWASMCode defines a rpc handler method for PushNewWASMCode. | |
+| `PushNewWasmCode` | [MsgPushNewWasmCode](#ibc.core.wasm.v1.MsgPushNewWasmCode) | [MsgPushNewWasmCodeResponse](#ibc.core.wasm.v1.MsgPushNewWasmCodeResponse) | PushNewWasmCode defines a rpc handler method for PushNewWasmCode. | |
 
  <!-- end services -->
 
@@ -4146,7 +4146,7 @@ that implements Misbehaviour interface expected by ICS-02
 <a name="ibc.lightclients.wasm.v1.ClientState"></a>
 
 ### ClientState
-WASM light client's Client state
+Wasm light client's Client state
 
 
 | Field | Type | Label | Description |
@@ -4164,7 +4164,7 @@ WASM light client's Client state
 <a name="ibc.lightclients.wasm.v1.ConsensusState"></a>
 
 ### ConsensusState
-WASM light client's ConsensusState
+Wasm light client's ConsensusState
 
 
 | Field | Type | Label | Description |
@@ -4182,7 +4182,7 @@ WASM light client's ConsensusState
 <a name="ibc.lightclients.wasm.v1.Header"></a>
 
 ### Header
-WASM light client Header
+Wasm light client Header
 
 
 | Field | Type | Label | Description |
@@ -4198,7 +4198,7 @@ WASM light client Header
 <a name="ibc.lightclients.wasm.v1.Misbehaviour"></a>
 
 ### Misbehaviour
-WASM light client Misbehaviour
+Wasm light client Misbehaviour
 
 
 | Field | Type | Label | Description |
