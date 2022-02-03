@@ -13,7 +13,7 @@ import (
 	channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
 	portkeeper "github.com/cosmos/ibc-go/v3/modules/core/05-port/keeper"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	wasmkeeper "github.com/cosmos/ibc-go/modules/core/28-wasm/keeper"
+	wasmkeeper "github.com/cosmos/ibc-go/v3/modules/core/28-wasm/keeper"
 	"github.com/cosmos/ibc-go/v3/modules/core/types"
 )
 

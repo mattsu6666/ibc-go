@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	wasm "github.com/cosmos/ibc-go/modules/core/28-wasm"
-	wasmtypes "github.com/cosmos/ibc-go/modules/core/28-wasm/types"
+	wasm "github.com/cosmos/ibc-go/v3/modules/core/28-wasm"
+	wasmtypes "github.com/cosmos/ibc-go/v3/modules/core/28-wasm/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v3/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"

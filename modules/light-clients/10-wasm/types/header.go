@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/cosmos/ibc-go/modules/core/exported"
+	"github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
 var _ exported.Header = (*Header)(nil)
@@ -20,6 +20,5 @@ func (m *Header) ValidateBasic() error {
 	if m.Data == nil || len(m.Data) == 0 {
 		return fmt.Errorf("data cannot be empty")
 	}
-
 	return nil
 }

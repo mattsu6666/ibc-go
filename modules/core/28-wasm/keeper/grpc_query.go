@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	wasm "github.com/CosmWasm/wasmvm"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/ibc-go/modules/core/28-wasm/types"
+	"github.com/cosmos/ibc-go/v3/modules/core/28-wasm/types"
 )
 
 var _ types.QueryServer = (*Keeper)(nil)
@@ -18,24 +18,21 @@ func (q Keeper) WasmCode(c context.Context, query *types.WasmCodeQuery) (*types.
 	if query == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	store := ctx.KVStore(q.storeKey)
-
-	codeID, err := hex.DecodeString(query.CodeId)
+	rawID, err := hex.DecodeString(query.CodeId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid code id")
 	}
-
-	codeKey := types.CodeID(codeID)
-	code := store.Get(codeKey)
-	if code == nil {
+	codeID := wasm.Checksum(rawID)
+	if WasmVM == nil {
+		return nil, status.Error(codes.Internal, "WasmVM resource not initialized")
+	}
+	code, err := WasmVM.GetCode(codeID)
+	if err != nil {
 		return nil, status.Error(
 			codes.NotFound,
 			sdkerrors.Wrap(types.ErrWasmCodeIDNotFound, query.CodeId).Error(),
 		)
 	}
-
 	return &types.WasmCodeResponse{
 		Code: code,
 	}, nil

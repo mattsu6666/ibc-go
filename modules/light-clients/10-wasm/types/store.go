@@ -11,16 +11,15 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	clienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
-	host "github.com/cosmos/ibc-go/modules/core/24-host"
-	"github.com/cosmos/ibc-go/modules/core/exported"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v3/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 )
 
 // WrappedStore combines two KVStores into one while transparently routing the calls based on key prefix
 type WrappedStore struct {
-	first  sdk.KVStore
-	second sdk.KVStore
-
+	first        sdk.KVStore
+	second       sdk.KVStore
 	firstPrefix  []byte
 	secondPrefix []byte
 }
@@ -80,7 +79,6 @@ func (ws WrappedStore) trimPrefix(key []byte) []byte {
 	} else {
 		key = bytes.TrimPrefix(key, ws.secondPrefix)
 	}
-
 	return key
 }
 
@@ -102,12 +100,10 @@ func GetConsensusState(store sdk.KVStore, cdc codec.BinaryCodec, height exported
 			"consensus state does not exist for height %s", height,
 		)
 	}
-
 	consensusStateI, err := clienttypes.UnmarshalConsensusState(cdc, bz)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "unmarshal error: %v", err)
 	}
-
 	consensusState, ok := consensusStateI.(*ConsensusState)
 	if !ok {
 		return nil, sdkerrors.Wrapf(
@@ -115,6 +111,5 @@ func GetConsensusState(store sdk.KVStore, cdc codec.BinaryCodec, height exported
 			"invalid consensus type %T, expected %T", consensusState, &ConsensusState{},
 		)
 	}
-
 	return consensusState, nil
 }

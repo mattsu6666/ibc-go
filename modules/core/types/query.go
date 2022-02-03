@@ -3,8 +3,8 @@ package types
 import (
 	"github.com/gogo/protobuf/grpc"
 
-	wasm "github.com/cosmos/ibc-go/modules/core/28-wasm"
-	wasmtypes "github.com/cosmos/ibc-go/modules/core/28-wasm/types"
+	wasm "github.com/cosmos/ibc-go/v3/modules/core/28-wasm"
+	wasmtypes "github.com/cosmos/ibc-go/v3/modules/core/28-wasm/types"
 	client "github.com/cosmos/ibc-go/v3/modules/core/02-client"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	connection "github.com/cosmos/ibc-go/v3/modules/core/03-connection"

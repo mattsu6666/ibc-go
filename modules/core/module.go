@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	wasmtypes "github.com/cosmos/ibc-go/modules/core/28-wasm/types"
+	wasmtypes "github.com/cosmos/ibc-go/v3/modules/core/28-wasm/types"
 	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
 	clientkeeper "github.com/cosmos/ibc-go/v3/modules/core/02-client/keeper"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"

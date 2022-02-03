@@ -5,12 +5,8 @@ module github.com/cosmos/ibc-go/v3
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-<<<<<<< HEAD
+	github.com/CosmWasm/wasmvm v0.16.3
 	github.com/armon/go-metrics v0.3.10
-=======
-	github.com/CosmWasm/wasmvm v0.13.0
-	github.com/armon/go-metrics v0.3.8
->>>>>>> rebase parth changes on ibc-go and fix tests
 	github.com/confio/ics23/go v0.6.6
 	github.com/cosmos/cosmos-sdk v0.45.0
 	github.com/gogo/protobuf v1.3.3
@@ -25,7 +21,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tendermint v0.34.14
 	github.com/tendermint/tm-db v0.6.4
-<<<<<<< HEAD
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
@@ -125,9 +120,4 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
-=======
-	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
-	google.golang.org/grpc v1.37.0
-	google.golang.org/protobuf v1.26.0 // indirect
->>>>>>> rebase parth changes on ibc-go and fix tests
 )

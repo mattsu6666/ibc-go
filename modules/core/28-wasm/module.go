@@ -1,8 +1,8 @@
 package wasm
 
 import (
-	"github.com/cosmos/ibc-go/modules/core/28-wasm/cli"
-	"github.com/cosmos/ibc-go/modules/core/28-wasm/types"
+	"github.com/cosmos/ibc-go/v3/modules/core/28-wasm/cli"
+	"github.com/cosmos/ibc-go/v3/modules/core/28-wasm/types"
 	"github.com/gogo/protobuf/grpc"
 	"github.com/spf13/cobra"
 )

@@ -5,8 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	wasmmanager "github.com/cosmos/ibc-go/modules/core/28-wasm"
-	wasm "github.com/cosmos/ibc-go/modules/light-clients/10-wasm"
+	wasmmanager "github.com/cosmos/ibc-go/v3/modules/core/28-wasm"
 	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
 	connection "github.com/cosmos/ibc-go/v3/modules/core/03-connection"
 	channel "github.com/cosmos/ibc-go/v3/modules/core/04-channel"

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/cosmos/ibc-go/modules/core/exported"
+	"github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
 var (

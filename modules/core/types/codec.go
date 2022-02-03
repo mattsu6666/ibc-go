@@ -3,8 +3,8 @@ package types
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
-	wasmmanagertypes "github.com/cosmos/ibc-go/modules/core/28-wasm/types"
-	wasmtypes "github.com/cosmos/ibc-go/modules/light-clients/10-wasm/types"
+	wasmmanagertypes "github.com/cosmos/ibc-go/v3/modules/core/28-wasm/types"
+	wasmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/10-wasm/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v3/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"

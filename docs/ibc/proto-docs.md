@@ -4154,7 +4154,6 @@ Wasm light client's Client state
 | `data` | [bytes](#bytes) |  |  |
 | `code_id` | [bytes](#bytes) |  |  |
 | `latest_height` | [ibc.core.client.v1.Height](#ibc.core.client.v1.Height) |  |  |
-| `proof_specs` | [ics23.ProofSpec](#ics23.ProofSpec) | repeated |  |
 
 
 
@@ -4170,8 +4169,7 @@ Wasm light client's ConsensusState
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `data` | [bytes](#bytes) |  |  |
-| `code_id` | [bytes](#bytes) |  |  |
-| `timestamp` | [uint64](#uint64) |  | timestamp that corresponds to the block height in which the ConsensusState was stored. |
+| `timestamp` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | timestamp that corresponds to the block height in which the ConsensusState was stored. |
 | `root` | [ibc.core.commitment.v1.MerkleRoot](#ibc.core.commitment.v1.MerkleRoot) |  | commitment root (i.e app hash) |
 
 
