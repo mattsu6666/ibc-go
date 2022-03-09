@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -68,30 +69,43 @@ func (k Keeper) SendPacket(
 	}
 
 	// prevent accidental sends with clients that cannot be updated
-	if clientState.IsFrozen() {
-		return sdkerrors.Wrapf(clienttypes.ErrClientFrozen, "cannot send packet on a frozen client with ID %s", connectionEnd.GetClientID())
+	clientStore := k.clientKeeper.ClientStore(ctx, connectionEnd.GetClientID())
+	if status := clientState.Status(ctx, clientStore, k.cdc); status != exported.Active {
+		return sdkerrors.Wrapf(clienttypes.ErrClientNotActive, "cannot send packet using client (%s) with status %s", connectionEnd.GetClientID(), status)
 	}
 
-	// check if packet timeouted on the receiving chain
+	// check if packet is timed out on the receiving chain
 	latestHeight := clientState.GetLatestHeight()
 	timeoutHeight := packet.GetTimeoutHeight()
-	if !timeoutHeight.IsZero() && latestHeight.GTE(timeoutHeight) {
-		return sdkerrors.Wrapf(
-			types.ErrPacketTimeout,
-			"receiving chain block height >= packet timeout height (%s >= %s)", latestHeight, timeoutHeight,
-		)
-	}
 
-	latestTimestamp, err := k.connectionKeeper.GetTimestampAtHeight(ctx, connectionEnd, latestHeight)
+	clientType, _, err := clienttypes.ParseClientIdentifier(connectionEnd.GetClientID())
 	if err != nil {
 		return err
 	}
 
-	if packet.GetTimeoutTimestamp() != 0 && latestTimestamp >= packet.GetTimeoutTimestamp() {
-		return sdkerrors.Wrapf(
-			types.ErrPacketTimeout,
-			"receiving chain block timestamp >= packet timeout timestamp (%s >= %s)", time.Unix(0, int64(latestTimestamp)), time.Unix(0, int64(packet.GetTimeoutTimestamp())),
-		)
+	if clientType != exported.Proxy {
+		if !timeoutHeight.IsZero() && latestHeight.GTE(timeoutHeight) {
+			return sdkerrors.Wrapf(
+				types.ErrPacketTimeout,
+				"receiving chain block height >= packet timeout height (%s >= %s)", latestHeight, timeoutHeight,
+			)
+		}
+	}
+
+	// NOTE: this is a temporary fix. Solo machine does not support usage of 'GetTimestampAtHeight'
+	// A future change should move this function to be a ClientState callback.
+	if clientType != exported.Solomachine && clientType != exported.Proxy {
+		latestTimestamp, err := k.connectionKeeper.GetTimestampAtHeight(ctx, connectionEnd, latestHeight)
+		if err != nil {
+			return err
+		}
+
+		if packet.GetTimeoutTimestamp() != 0 && latestTimestamp >= packet.GetTimeoutTimestamp() {
+			return sdkerrors.Wrapf(
+				types.ErrPacketTimeout,
+				"receiving chain block timestamp >= packet timeout timestamp (%s >= %s)", time.Unix(0, int64(latestTimestamp)), time.Unix(0, int64(packet.GetTimeoutTimestamp())),
+			)
+		}
 	}
 
 	nextSequenceSend, found := k.GetNextSequenceSend(ctx, packet.GetSourcePort(), packet.GetSourceChannel())
@@ -120,7 +134,8 @@ func (k Keeper) SendPacket(
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeSendPacket,
-			sdk.NewAttribute(types.AttributeKeyData, string(packet.GetData())),
+			sdk.NewAttribute(types.AttributeKeyData, string(packet.GetData())), // DEPRECATED
+			sdk.NewAttribute(types.AttributeKeyDataHex, hex.EncodeToString(packet.GetData())),
 			sdk.NewAttribute(types.AttributeKeyTimeoutHeight, timeoutHeight.String()),
 			sdk.NewAttribute(types.AttributeKeyTimeoutTimestamp, fmt.Sprintf("%d", packet.GetTimeoutTimestamp())),
 			sdk.NewAttribute(types.AttributeKeySequence, fmt.Sprintf("%d", packet.GetSequence())),
@@ -238,8 +253,8 @@ func (k Keeper) RecvPacket(
 		_, found := k.GetPacketReceipt(ctx, packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
 		if found {
 			return sdkerrors.Wrapf(
-				types.ErrInvalidPacket,
-				"packet sequence (%d) already has been received", packet.GetSequence(),
+				types.ErrPacketReceived,
+				"packet sequence (%d)", packet.GetSequence(),
 			)
 		}
 
@@ -259,9 +274,17 @@ func (k Keeper) RecvPacket(
 			)
 		}
 
+		// helpful error message for relayers
+		if packet.GetSequence() < nextSequenceRecv {
+			return sdkerrors.Wrapf(
+				types.ErrPacketReceived,
+				"packet sequence (%d), next sequence receive (%d)", packet.GetSequence(), nextSequenceRecv,
+			)
+		}
+
 		if packet.GetSequence() != nextSequenceRecv {
 			return sdkerrors.Wrapf(
-				types.ErrInvalidPacket,
+				types.ErrPacketSequenceOutOfOrder,
 				"packet sequence ≠ next receive sequence (%d ≠ %d)", packet.GetSequence(), nextSequenceRecv,
 			)
 		}
@@ -283,7 +306,8 @@ func (k Keeper) RecvPacket(
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeRecvPacket,
-			sdk.NewAttribute(types.AttributeKeyData, string(packet.GetData())),
+			sdk.NewAttribute(types.AttributeKeyData, string(packet.GetData())), // DEPRECATED
+			sdk.NewAttribute(types.AttributeKeyDataHex, hex.EncodeToString(packet.GetData())),
 			sdk.NewAttribute(types.AttributeKeyTimeoutHeight, packet.GetTimeoutHeight().String()),
 			sdk.NewAttribute(types.AttributeKeyTimeoutTimestamp, fmt.Sprintf("%d", packet.GetTimeoutTimestamp())),
 			sdk.NewAttribute(types.AttributeKeySequence, fmt.Sprintf("%d", packet.GetSequence())),
@@ -367,7 +391,8 @@ func (k Keeper) WriteAcknowledgement(
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeWriteAck,
-			sdk.NewAttribute(types.AttributeKeyData, string(packet.GetData())),
+			sdk.NewAttribute(types.AttributeKeyData, string(packet.GetData())), // DEPRECATED
+			sdk.NewAttribute(types.AttributeKeyDataHex, hex.EncodeToString(packet.GetData())),
 			sdk.NewAttribute(types.AttributeKeyTimeoutHeight, packet.GetTimeoutHeight().String()),
 			sdk.NewAttribute(types.AttributeKeyTimeoutTimestamp, fmt.Sprintf("%d", packet.GetTimeoutTimestamp())),
 			sdk.NewAttribute(types.AttributeKeySequence, fmt.Sprintf("%d", packet.GetSequence())),
@@ -376,6 +401,7 @@ func (k Keeper) WriteAcknowledgement(
 			sdk.NewAttribute(types.AttributeKeyDstPort, packet.GetDestPort()),
 			sdk.NewAttribute(types.AttributeKeyDstChannel, packet.GetDestChannel()),
 			sdk.NewAttribute(types.AttributeKeyAck, string(acknowledgement)),
+			sdk.NewAttribute(types.AttributeKeyAckHex, hex.EncodeToString(acknowledgement)),
 			// we only support 1-hop packets now, and that is the most important hop for a relayer
 			// (is it going to a chain I am connected to)
 			sdk.NewAttribute(types.AttributeKeyConnection, channel.ConnectionHops[0]),
@@ -456,6 +482,10 @@ func (k Keeper) AcknowledgePacket(
 
 	commitment := k.GetPacketCommitment(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
 
+	if len(commitment) == 0 {
+		return sdkerrors.Wrapf(types.ErrPacketCommitmentNotFound, "packet with sequence (%d) has been acknowledged, or timed out. In rare cases, the packet referenced was never sent, likely due to the relayer being misconfigured", packet.GetSequence())
+	}
+
 	packetCommitment := types.CommitPacket(k.cdc, packet)
 
 	// verify we sent the packet and haven't cleared it out yet
@@ -467,7 +497,7 @@ func (k Keeper) AcknowledgePacket(
 		ctx, connectionEnd, proofHeight, proof, packet.GetDestPort(), packet.GetDestChannel(),
 		packet.GetSequence(), acknowledgement,
 	); err != nil {
-		return sdkerrors.Wrap(err, "packet acknowledgement verification failed")
+		return err
 	}
 
 	// assert packets acknowledged in order
@@ -482,7 +512,7 @@ func (k Keeper) AcknowledgePacket(
 
 		if packet.GetSequence() != nextSequenceAck {
 			return sdkerrors.Wrapf(
-				sdkerrors.ErrInvalidSequence,
+				types.ErrPacketSequenceOutOfOrder,
 				"packet sequence ≠ next ack sequence (%d ≠ %d)", packet.GetSequence(), nextSequenceAck,
 			)
 		}

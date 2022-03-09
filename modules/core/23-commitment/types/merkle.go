@@ -123,7 +123,15 @@ func ApplyPrefix(prefix exported.Prefix, path MerklePath) (MerklePath, error) {
 	if prefix == nil || prefix.Empty() {
 		return MerklePath{}, sdkerrors.Wrap(ErrInvalidPrefix, "prefix can't be empty")
 	}
-	return NewMerklePath(append([]string{string(prefix.Bytes())}, path.KeyPath...)...), nil
+	keyPath := make([]string, len(path.KeyPath))
+	copy(keyPath[:], path.KeyPath)
+	switch prefix := prefix.(type) {
+	case MultiPrefix:
+		if len(keyPath) > 0 {
+			keyPath[0] = fmt.Sprintf("%s/%s", string(prefix.PathPrefix), keyPath[0])
+		}
+	}
+	return NewMerklePath(append([]string{string(prefix.Bytes())}, keyPath...)...), nil
 }
 
 var _ exported.Proof = (*MerkleProof)(nil)
@@ -253,8 +261,8 @@ func verifyChainedMembershipProof(root []byte, specs []*ics23.ProofSpec, proofs 
 			value = subroot
 		case *ics23.CommitmentProof_Nonexist:
 			return sdkerrors.Wrapf(ErrInvalidProof,
-				"chained membership proof contains nonexistence proof at index %d. If this is unexpected, please ensure that proof was queried from the height that contained the value in store and was queried with the correct key.",
-				i)
+				"chained membership proof contains nonexistence proof at index %d. If this is unexpected, please ensure that proof was queried from a height that contained the value in store and was queried with the correct key. The key used: %s",
+				i, keys)
 		default:
 			return sdkerrors.Wrapf(ErrInvalidProof,
 				"expected proof type: %T, got: %T", &ics23.CommitmentProof_Exist{}, proofs[i].Proof)

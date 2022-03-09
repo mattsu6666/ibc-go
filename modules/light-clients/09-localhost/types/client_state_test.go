@@ -19,6 +19,14 @@ const (
 	testSequence     = 1
 )
 
+func (suite *LocalhostTestSuite) TestStatus() {
+	clientState := types.NewClientState("chainID", clienttypes.NewHeight(3, 10))
+
+	// localhost should always return active
+	status := clientState.Status(suite.ctx, nil, nil)
+	suite.Require().Equal(exported.Active, status)
+}
+
 func (suite *LocalhostTestSuite) TestValidate() {
 	testCases := []struct {
 		name        string
@@ -170,7 +178,7 @@ func (suite *LocalhostTestSuite) TestMisbehaviourAndUpdateState() {
 
 func (suite *LocalhostTestSuite) TestProposedHeaderAndUpdateState() {
 	clientState := types.NewClientState("chainID", clientHeight)
-	cs, err := clientState.CheckSubstituteAndUpdateState(suite.ctx, nil, nil, nil, nil, nil)
+	cs, err := clientState.CheckSubstituteAndUpdateState(suite.ctx, nil, nil, nil, nil)
 	suite.Require().Error(err)
 	suite.Require().Nil(cs)
 }
@@ -191,7 +199,7 @@ func (suite *LocalhostTestSuite) TestVerifyConnectionState() {
 			name:        "proof verification success",
 			clientState: types.NewClientState("chainID", clientHeight),
 			malleate: func() {
-				bz, err := suite.cdc.MarshalBinaryBare(&conn1)
+				bz, err := suite.cdc.Marshal(&conn1)
 				suite.Require().NoError(err)
 				suite.store.Set(host.ConnectionKey(testConnectionID), bz)
 			},
@@ -218,7 +226,7 @@ func (suite *LocalhostTestSuite) TestVerifyConnectionState() {
 			name:        "proof verification failed: different connection stored",
 			clientState: types.NewClientState("chainID", clientHeight),
 			malleate: func() {
-				bz, err := suite.cdc.MarshalBinaryBare(&conn2)
+				bz, err := suite.cdc.Marshal(&conn2)
 				suite.Require().NoError(err)
 				suite.store.Set(host.ConnectionKey(testConnectionID), bz)
 			},
@@ -263,7 +271,7 @@ func (suite *LocalhostTestSuite) TestVerifyChannelState() {
 			name:        "proof verification success",
 			clientState: types.NewClientState("chainID", clientHeight),
 			malleate: func() {
-				bz, err := suite.cdc.MarshalBinaryBare(&ch1)
+				bz, err := suite.cdc.Marshal(&ch1)
 				suite.Require().NoError(err)
 				suite.store.Set(host.ChannelKey(testPortID, testChannelID), bz)
 			},
@@ -291,7 +299,7 @@ func (suite *LocalhostTestSuite) TestVerifyChannelState() {
 			name:        "proof verification failed: different channel stored",
 			clientState: types.NewClientState("chainID", clientHeight),
 			malleate: func() {
-				bz, err := suite.cdc.MarshalBinaryBare(&ch2)
+				bz, err := suite.cdc.Marshal(&ch2)
 				suite.Require().NoError(err)
 				suite.store.Set(host.ChannelKey(testPortID, testChannelID), bz)
 
@@ -368,7 +376,7 @@ func (suite *LocalhostTestSuite) TestVerifyPacketCommitment() {
 			tc.malleate()
 
 			err := tc.clientState.VerifyPacketCommitment(
-				suite.store, suite.cdc, clientHeight, 0, 0, nil, []byte{}, testPortID, testChannelID, testSequence, tc.commitment,
+				suite.ctx, suite.store, suite.cdc, clientHeight, 0, 0, nil, []byte{}, testPortID, testChannelID, testSequence, tc.commitment,
 			)
 
 			if tc.expPass {
@@ -427,7 +435,7 @@ func (suite *LocalhostTestSuite) TestVerifyPacketAcknowledgement() {
 			tc.malleate()
 
 			err := tc.clientState.VerifyPacketAcknowledgement(
-				suite.store, suite.cdc, clientHeight, 0, 0, nil, []byte{}, testPortID, testChannelID, testSequence, tc.ack,
+				suite.ctx, suite.store, suite.cdc, clientHeight, 0, 0, nil, []byte{}, testPortID, testChannelID, testSequence, tc.ack,
 			)
 
 			if tc.expPass {
@@ -443,7 +451,7 @@ func (suite *LocalhostTestSuite) TestVerifyPacketReceiptAbsence() {
 	clientState := types.NewClientState("chainID", clientHeight)
 
 	err := clientState.VerifyPacketReceiptAbsence(
-		suite.store, suite.cdc, clientHeight, 0, 0, nil, nil, testPortID, testChannelID, testSequence,
+		suite.ctx, suite.store, suite.cdc, clientHeight, 0, 0, nil, nil, testPortID, testChannelID, testSequence,
 	)
 
 	suite.Require().NoError(err, "receipt absence failed")
@@ -451,7 +459,7 @@ func (suite *LocalhostTestSuite) TestVerifyPacketReceiptAbsence() {
 	suite.store.Set(host.PacketReceiptKey(testPortID, testChannelID, testSequence), []byte("receipt"))
 
 	err = clientState.VerifyPacketReceiptAbsence(
-		suite.store, suite.cdc, clientHeight, 0, 0, nil, nil, testPortID, testChannelID, testSequence,
+		suite.ctx, suite.store, suite.cdc, clientHeight, 0, 0, nil, nil, testPortID, testChannelID, testSequence,
 	)
 	suite.Require().Error(err, "receipt exists in store")
 }
@@ -507,7 +515,7 @@ func (suite *LocalhostTestSuite) TestVerifyNextSeqRecv() {
 			tc.malleate()
 
 			err := tc.clientState.VerifyNextSequenceRecv(
-				suite.store, suite.cdc, clientHeight, 0, 0, nil, []byte{}, testPortID, testChannelID, nextSeqRecv,
+				suite.ctx, suite.store, suite.cdc, clientHeight, 0, 0, nil, []byte{}, testPortID, testChannelID, nextSeqRecv,
 			)
 
 			if tc.expPass {

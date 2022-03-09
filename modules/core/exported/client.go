@@ -2,11 +2,13 @@ package exported
 
 import (
 	ics23 "github.com/confio/ics23/go"
-	proto "github.com/gogo/protobuf/proto"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/gogo/protobuf/proto"
 )
+
+// Status represents the status of a client
+type Status string
 
 const (
 	// TypeClientMisbehaviour is the shared evidence misbehaviour type
@@ -21,6 +23,21 @@ const (
 	// Localhost is the client type for a localhost client. It is also used as the clientID
 	// for the localhost client.
 	Localhost string = "09-localhost"
+
+	// Proxy is the client type for IBC-Proxy
+	Proxy string = "proxyclient"
+
+	// Active is a status type of a client. An active client is allowed to be used.
+	Active Status = "Active"
+
+	// Frozen is a status type of a client. A frozen client is not allowed to be used.
+	Frozen Status = "Frozen"
+
+	// Expired is a status type of a client. An expired client is not allowed to be used.
+	Expired Status = "Expired"
+
+	// Unknown indicates there was an error in determining the status of a client.
+	Unknown Status = "Unknown"
 )
 
 // ClientState defines the required common functions for light clients.
@@ -29,24 +46,26 @@ type ClientState interface {
 
 	ClientType() string
 	GetLatestHeight() Height
-	IsFrozen() bool
-	GetFrozenHeight() Height
 	Validate() error
 	GetProofSpecs() []*ics23.ProofSpec
 
 	// Initialization function
 	// Clients must validate the initial consensus state, and may store any client-specific metadata
 	// necessary for correct light client operation
-	Initialize(sdk.Context, codec.BinaryMarshaler, sdk.KVStore, ConsensusState) error
+	Initialize(sdk.Context, codec.BinaryCodec, sdk.KVStore, ConsensusState) error
+
+	// Status function
+	// Clients must return their status. Only Active clients are allowed to process packets.
+	Status(ctx sdk.Context, clientStore sdk.KVStore, cdc codec.BinaryCodec) Status
 
 	// Genesis function
 	ExportMetadata(sdk.KVStore) []GenesisMetadata
 
 	// Update and Misbehaviour functions
 
-	CheckHeaderAndUpdateState(sdk.Context, codec.BinaryMarshaler, sdk.KVStore, Header) (ClientState, ConsensusState, error)
-	CheckMisbehaviourAndUpdateState(sdk.Context, codec.BinaryMarshaler, sdk.KVStore, Misbehaviour) (ClientState, error)
-	CheckSubstituteAndUpdateState(ctx sdk.Context, cdc codec.BinaryMarshaler, subjectClientStore, substituteClientStore sdk.KVStore, substituteClient ClientState, height Height) (ClientState, error)
+	CheckHeaderAndUpdateState(sdk.Context, codec.BinaryCodec, sdk.KVStore, Header) (ClientState, ConsensusState, error)
+	CheckMisbehaviourAndUpdateState(sdk.Context, codec.BinaryCodec, sdk.KVStore, Misbehaviour) (ClientState, error)
+	CheckSubstituteAndUpdateState(ctx sdk.Context, cdc codec.BinaryCodec, subjectClientStore, substituteClientStore sdk.KVStore, substituteClient ClientState) (ClientState, error)
 
 	// Upgrade functions
 	// NOTE: proof heights are not included as upgrade to a new revision is expected to pass only on the last
@@ -56,7 +75,7 @@ type ClientState interface {
 	// may be cancelled or modified before the last planned height.
 	VerifyUpgradeAndUpdateState(
 		ctx sdk.Context,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		store sdk.KVStore,
 		newClient ClientState,
 		newConsState ConsensusState,
@@ -72,7 +91,7 @@ type ClientState interface {
 
 	VerifyClientState(
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
 		prefix Prefix,
 		counterpartyClientIdentifier string,
@@ -81,7 +100,7 @@ type ClientState interface {
 	) error
 	VerifyClientConsensusState(
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
 		counterpartyClientIdentifier string,
 		consensusHeight Height,
@@ -91,7 +110,7 @@ type ClientState interface {
 	) error
 	VerifyConnectionState(
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
 		prefix Prefix,
 		proof []byte,
@@ -100,7 +119,7 @@ type ClientState interface {
 	) error
 	VerifyChannelState(
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
 		prefix Prefix,
 		proof []byte,
@@ -109,11 +128,12 @@ type ClientState interface {
 		channel ChannelI,
 	) error
 	VerifyPacketCommitment(
+		ctx sdk.Context,
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
-		currentTimestamp uint64,
-		delayPeriod uint64,
+		delayTimePeriod uint64,
+		delayBlockPeriod uint64,
 		prefix Prefix,
 		proof []byte,
 		portID,
@@ -122,11 +142,12 @@ type ClientState interface {
 		commitmentBytes []byte,
 	) error
 	VerifyPacketAcknowledgement(
+		ctx sdk.Context,
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
-		currentTimestamp uint64,
-		delayPeriod uint64,
+		delayTimePeriod uint64,
+		delayBlockPeriod uint64,
 		prefix Prefix,
 		proof []byte,
 		portID,
@@ -135,11 +156,12 @@ type ClientState interface {
 		acknowledgement []byte,
 	) error
 	VerifyPacketReceiptAbsence(
+		ctx sdk.Context,
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
-		currentTimestamp uint64,
-		delayPeriod uint64,
+		delayTimePeriod uint64,
+		delayBlockPeriod uint64,
 		prefix Prefix,
 		proof []byte,
 		portID,
@@ -147,11 +169,12 @@ type ClientState interface {
 		sequence uint64,
 	) error
 	VerifyNextSequenceRecv(
+		ctx sdk.Context,
 		store sdk.KVStore,
-		cdc codec.BinaryMarshaler,
+		cdc codec.BinaryCodec,
 		height Height,
-		currentTimestamp uint64,
-		delayPeriod uint64,
+		delayTimePeriod uint64,
+		delayBlockPeriod uint64,
 		prefix Prefix,
 		proof []byte,
 		portID,
@@ -183,9 +206,6 @@ type Misbehaviour interface {
 	ClientType() string
 	GetClientID() string
 	ValidateBasic() error
-
-	// Height at which the infraction occurred
-	GetHeight() Height
 }
 
 // Header is the consensus state update information
@@ -220,4 +240,9 @@ type GenesisMetadata interface {
 	GetKey() []byte
 	// returns metadata value
 	GetValue() []byte
+}
+
+// String returns the string representation of a client status.
+func (s Status) String() string {
+	return string(s)
 }

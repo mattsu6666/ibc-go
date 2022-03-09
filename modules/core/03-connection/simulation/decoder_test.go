@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc-go/testing/simapp"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/cosmos/ibc-go/modules/core/03-connection/simulation"
 	"github.com/cosmos/ibc-go/modules/core/03-connection/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
+	"github.com/cosmos/ibc-go/testing/simapp"
 )
 
 func TestDecodeStore(t *testing.T) {
@@ -32,11 +32,11 @@ func TestDecodeStore(t *testing.T) {
 		Pairs: []kv.Pair{
 			{
 				Key:   host.ClientConnectionsKey(connection.ClientId),
-				Value: cdc.MustMarshalBinaryBare(&paths),
+				Value: cdc.MustMarshal(&paths),
 			},
 			{
 				Key:   host.ConnectionKey(connectionID),
-				Value: cdc.MustMarshalBinaryBare(&connection),
+				Value: cdc.MustMarshal(&connection),
 			},
 			{
 				Key:   []byte{0x99},

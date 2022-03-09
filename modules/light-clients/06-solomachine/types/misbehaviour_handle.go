@@ -16,7 +16,7 @@ import (
 // order processing dependent.
 func (cs ClientState) CheckMisbehaviourAndUpdateState(
 	ctx sdk.Context,
-	cdc codec.BinaryMarshaler,
+	cdc codec.BinaryCodec,
 	clientStore sdk.KVStore,
 	misbehaviour exported.Misbehaviour,
 ) (exported.ClientState, error) {
@@ -27,10 +27,6 @@ func (cs ClientState) CheckMisbehaviourAndUpdateState(
 			clienttypes.ErrInvalidClientType,
 			"misbehaviour type %T, expected %T", misbehaviour, &Misbehaviour{},
 		)
-	}
-
-	if cs.IsFrozen() {
-		return nil, sdkerrors.Wrapf(clienttypes.ErrClientFrozen, "client is already frozen")
 	}
 
 	// NOTE: a check that the misbehaviour message data are not equal is done by
@@ -46,14 +42,14 @@ func (cs ClientState) CheckMisbehaviourAndUpdateState(
 		return nil, sdkerrors.Wrap(err, "failed to verify signature two")
 	}
 
-	cs.FrozenSequence = soloMisbehaviour.Sequence
+	cs.IsFrozen = true
 	return &cs, nil
 }
 
 // verifySignatureAndData verifies that the currently registered public key has signed
 // over the provided data and that the data is valid. The data is valid if it can be
 // unmarshaled into the specified data type.
-func verifySignatureAndData(cdc codec.BinaryMarshaler, clientState ClientState, misbehaviour *Misbehaviour, sigAndData *SignatureAndData) error {
+func verifySignatureAndData(cdc codec.BinaryCodec, clientState ClientState, misbehaviour *Misbehaviour, sigAndData *SignatureAndData) error {
 
 	// do not check misbehaviour timestamp since we want to allow processing of past misbehaviour
 

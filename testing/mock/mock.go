@@ -17,6 +17,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
 	"github.com/cosmos/ibc-go/modules/core/exported"
 )
@@ -34,6 +35,14 @@ var (
 	MockCanaryCapabilityName = "mock canary capability name"
 )
 
+var _ porttypes.IBCModule = AppModule{}
+
+// Expected Interface
+// PortKeeper defines the expected IBC port keeper
+type PortKeeper interface {
+	BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability
+}
+
 // AppModuleBasic is the mock AppModuleBasic.
 type AppModuleBasic struct{}
 
@@ -49,12 +58,12 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(*codec.LegacyAmino) {}
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {}
 
 // DefaultGenesis implements AppModuleBasic interface.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return nil
 }
 
 // ValidateGenesis implements the AppModuleBasic interface.
-func (AppModuleBasic) ValidateGenesis(codec.JSONMarshaler, client.TxEncodingConfig, json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(codec.JSONCodec, client.TxEncodingConfig, json.RawMessage) error {
 	return nil
 }
 
@@ -78,12 +87,14 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 	scopedKeeper capabilitykeeper.ScopedKeeper
+	portKeeper   PortKeeper
 }
 
 // NewAppModule returns a mock AppModule instance.
-func NewAppModule(sk capabilitykeeper.ScopedKeeper) AppModule {
+func NewAppModule(sk capabilitykeeper.ScopedKeeper, pk PortKeeper) AppModule {
 	return AppModule{
 		scopedKeeper: sk,
+		portKeeper:   pk,
 	}
 }
 
@@ -109,14 +120,21 @@ func (am AppModule) LegacyQuerierHandler(*codec.LegacyAmino) sdk.Querier {
 func (am AppModule) RegisterServices(module.Configurator) {}
 
 // InitGenesis implements the AppModule interface.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+	// bind mock port ID
+	cap := am.portKeeper.BindPort(ctx, ModuleName)
+	am.scopedKeeper.ClaimCapability(ctx, cap, host.PortPath(ModuleName))
+
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis implements the AppModule interface.
-func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	return nil
 }
+
+// ConsensusVersion implements AppModule/ConsensusVersion.
+func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock implements the AppModule interface
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
@@ -174,7 +192,7 @@ func (am AppModule) OnChanCloseConfirm(sdk.Context, string, string) error {
 }
 
 // OnRecvPacket implements the IBCModule interface.
-func (am AppModule) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet) exported.Acknowledgement {
+func (am AppModule) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) exported.Acknowledgement {
 	// set state by claiming capability to check if revert happens return
 	am.scopedKeeper.NewCapability(ctx, MockCanaryCapabilityName)
 	if bytes.Equal(MockPacketData, packet.GetData()) {
@@ -187,11 +205,11 @@ func (am AppModule) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet) ex
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface.
-func (am AppModule) OnAcknowledgementPacket(sdk.Context, channeltypes.Packet, []byte) (*sdk.Result, error) {
+func (am AppModule) OnAcknowledgementPacket(sdk.Context, channeltypes.Packet, []byte, sdk.AccAddress) (*sdk.Result, error) {
 	return nil, nil
 }
 
 // OnTimeoutPacket implements the IBCModule interface.
-func (am AppModule) OnTimeoutPacket(sdk.Context, channeltypes.Packet) (*sdk.Result, error) {
+func (am AppModule) OnTimeoutPacket(sdk.Context, channeltypes.Packet, sdk.AccAddress) (*sdk.Result, error) {
 	return nil, nil
 }

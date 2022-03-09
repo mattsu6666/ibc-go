@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	clienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/modules/core/03-connection/types"
 	"github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
@@ -66,19 +67,29 @@ func (k Keeper) TimeoutPacket(
 		)
 	}
 
-	// check that timeout height or timeout timestamp has passed on the other end
-	proofTimestamp, err := k.connectionKeeper.GetTimestampAtHeight(ctx, connectionEnd, proofHeight)
+	clientType, _, err := clienttypes.ParseClientIdentifier(connectionEnd.GetClientID())
 	if err != nil {
 		return err
 	}
 
-	timeoutHeight := packet.GetTimeoutHeight()
-	if (timeoutHeight.IsZero() || proofHeight.LT(timeoutHeight)) &&
-		(packet.GetTimeoutTimestamp() == 0 || proofTimestamp < packet.GetTimeoutTimestamp()) {
-		return sdkerrors.Wrap(types.ErrPacketTimeout, "packet timeout has not been reached for height or timestamp")
+	if clientType != exported.Proxy {
+		// check that timeout height or timeout timestamp has passed on the other end
+		proofTimestamp, err := k.connectionKeeper.GetTimestampAtHeight(ctx, connectionEnd, proofHeight)
+		if err != nil {
+			return err
+		}
+		timeoutHeight := packet.GetTimeoutHeight()
+		if (timeoutHeight.IsZero() || proofHeight.LT(timeoutHeight)) &&
+			(packet.GetTimeoutTimestamp() == 0 || proofTimestamp < packet.GetTimeoutTimestamp()) {
+			return sdkerrors.Wrap(types.ErrPacketTimeout, "packet timeout has not been reached for height or timestamp")
+		}
 	}
 
 	commitment := k.GetPacketCommitment(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
+
+	if len(commitment) == 0 {
+		return sdkerrors.Wrapf(types.ErrPacketCommitmentNotFound, "packet with sequence (%d) has been acknowledged or timed out. In rare cases, the packet referenced was never sent, likely due to the relayer being misconfigured", packet.GetSequence())
+	}
 
 	packetCommitment := types.CommitPacket(k.cdc, packet)
 
@@ -92,7 +103,7 @@ func (k Keeper) TimeoutPacket(
 		// check that packet has not been received
 		if nextSequenceRecv > packet.GetSequence() {
 			return sdkerrors.Wrapf(
-				types.ErrInvalidPacket,
+				types.ErrPacketReceived,
 				"packet already received, next sequence receive > packet sequence (%d > %d)", nextSequenceRecv, packet.GetSequence(),
 			)
 		}
