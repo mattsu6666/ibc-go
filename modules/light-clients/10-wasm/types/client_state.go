@@ -136,7 +136,6 @@ func (c *ClientState) CheckMisbehaviourAndUpdateState(context sdk.Context, marsh
 func (c *ClientState) CheckSubstituteAndUpdateState(
 	ctx sdk.Context, cdc codec.BinaryCodec, subjectClientStore,
 	substituteClientStore sdk.KVStore, substituteClient exported.ClientState,
-	initialHeight exported.Height,
 ) (exported.ClientState, error) {
 	var (
 		SubjectPrefix    = []byte("subject/")
@@ -159,7 +158,6 @@ func (c *ClientState) CheckSubstituteAndUpdateState(
 	inner["me"] = c
 	inner["subject_consensus_state"] = consensusState
 	inner["substitute_client_state"] = substituteClient
-	inner["initial_height"] = initialHeight
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
