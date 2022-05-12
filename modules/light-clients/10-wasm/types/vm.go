@@ -42,14 +42,6 @@ func (r *clientStateCallResponse) resetImmutables(c *ClientState) {
 	if r.Me != nil {
 		r.Me.CodeId = c.CodeId
 	}
-
-	if r.NewConsensusState != nil {
-		r.NewConsensusState.CodeId = c.CodeId
-	}
-
-	if r.NewClientState != nil {
-		r.NewClientState.CodeId = c.CodeId
-	}
 }
 
 // Calls vm.Init with appropriate arguments

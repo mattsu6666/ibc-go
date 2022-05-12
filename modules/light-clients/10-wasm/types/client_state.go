@@ -3,15 +3,17 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	ics23 "github.com/confio/ics23/go"
 
 	"github.com/CosmWasm/wasmvm/api"
-	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/modules/core/exported"
 )
+
+var _ exported.ClientState = (*ClientState)(nil)
 
 func (c *ClientState) Initialize(context sdk.Context, marshaler codec.BinaryCodec, store sdk.KVStore, state exported.ConsensusState) error {
 	const InitializeState = "initializestate"
@@ -233,16 +235,19 @@ func (c *ClientState) ZeroCustomFields() exported.ClientState {
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
 		// TODO: Handle error
+		return nil
 	}
 
 	gasMeter := sdk.NewGasMeter(maxGasLimit)
 	out, err := callContractWithEnvAndMeter(c.CodeId, nil, &FailKVStore{}, api.MockEnv(), gasMeter, encodedData)
 	if err != nil {
 		// TODO: Handle error
+		return nil
 	}
 	output := clientStateCallResponse{}
 	if err := json.Unmarshal(out.Data, &output); err != nil {
 		// TODO: Handle error
+		return nil
 	}
 	output.resetImmutables(c)
 	return output.Me
@@ -266,15 +271,18 @@ func (c *ClientState) ExportMetadata(store sdk.KVStore) []exported.GenesisMetada
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
 		// TODO: Handle error
+		return nil
 	}
 	response, err := queryContractWithStore(c.CodeId, store, encodedData)
 	if err != nil {
 		// TODO: Handle error
+		return nil
 	}
 
 	output := queryResponse{}
 	if err := json.Unmarshal(response, &output); err != nil {
 		// TODO: Handle error
+		return nil
 	}
 
 	genesisMetadata := make([]exported.GenesisMetadata, len(output.GenesisMetadata))
@@ -332,7 +340,8 @@ func (c *ClientState) Validate() error {
 }
 
 func (c *ClientState) GetProofSpecs() []*ics23.ProofSpec {
-	return c.ProofSpecs
+	// TODO: Is that true? Maybe ClientState should be updated to v3 from v1
+	return nil
 }
 
 func (c *ClientState) VerifyClientState(store sdk.KVStore, cdc codec.BinaryCodec, height exported.Height, prefix exported.Prefix, counterpartyClientIdentifier string, proof []byte, clientState exported.ClientState) error {
